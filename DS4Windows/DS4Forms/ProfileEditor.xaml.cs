@@ -1383,6 +1383,16 @@ namespace DS4WinWPF.DS4Forms
                 }
             }
         }
+
+        private void GyroCalibration_Click(object sender, RoutedEventArgs e)
+        {
+            int deviceNum = profileSettingsVM.FuncDevNum;
+            if (deviceNum < ControlService.CURRENT_DS4_CONTROLLER_LIMIT)
+            {
+                DS4Device d = App.rootHub.DS4Controllers[deviceNum];
+                d.SixAxis.ResetContinuousCalibration();
+            }
+        }
     }
 
     public class ControlIndexCheck

@@ -111,7 +111,7 @@ namespace DS4Windows
         AccelXIdx = 3, AccelYIdx = 4, AccelZIdx = 5;
     }
 
-    public class GYRO_AVERAGE_WINDOW
+    public class GyroAverageWindow
     {
         public float x;
         public float y;
@@ -130,7 +130,7 @@ namespace DS4Windows
             }
         }
 
-        public GYRO_AVERAGE_WINDOW()
+        public GyroAverageWindow()
         {
             Reset();
         }
@@ -171,19 +171,25 @@ namespace DS4Windows
         const int num_gyro_average_windows = 3;
         private int gyro_average_window_front_index = 0;
         const int gyro_average_window_ms = 5000;
-        private GYRO_AVERAGE_WINDOW[] gyro_average_window;
+        private GyroAverageWindow[] gyro_average_window = new GyroAverageWindow[num_gyro_average_windows];
         private float gyro_offset_x = 0;
         private float gyro_offset_y = 0;
         private float gyro_offset_z = 0;
         private float gyro_accel_magnitude = 1.0f;
         private readonly Stopwatch gyroAverageTimer = new Stopwatch();
+        public long CntCalibrating
+        {
+            get
+            {
+                return gyroAverageTimer.IsRunning ? gyroAverageTimer.ElapsedMilliseconds : 0;
+            }
+        }
 
         public DS4SixAxis()
         {
             sPrev = new SixAxis(0, 0, 0, 0, 0, 0, 0.0);
             now = new SixAxis(0, 0, 0, 0, 0, 0, 0.0);
-            gyro_average_window = new GYRO_AVERAGE_WINDOW[num_gyro_average_windows];
-            for (int i = 0; i < gyro_average_window.Length; i++) gyro_average_window[i] = new GYRO_AVERAGE_WINDOW();
+            for (int i = 0; i < gyro_average_window.Length; i++) gyro_average_window[i] = new GyroAverageWindow();
             gyroAverageTimer.Start();
         }
 
@@ -365,7 +371,7 @@ namespace DS4Windows
         public unsafe void PushSensorSamples(float x, float y, float z, float accelMagnitude)
         {
             // push samples
-            GYRO_AVERAGE_WINDOW windowPointer = gyro_average_window[gyro_average_window_front_index];
+            GyroAverageWindow windowPointer = gyro_average_window[gyro_average_window_front_index];
 
             if (windowPointer.StopIfElapsed(gyro_average_window_ms))
             {
@@ -397,7 +403,7 @@ namespace DS4Windows
             for (int i = 0; i < num_gyro_average_windows && wantedMs > 0; i++)
             {
                 int cycledIndex = (i + gyro_average_window_front_index) % num_gyro_average_windows;
-                GYRO_AVERAGE_WINDOW windowPointer = gyro_average_window[cycledIndex];
+                GyroAverageWindow windowPointer = gyro_average_window[cycledIndex];
                 if (windowPointer.numSamples == 0 || windowPointer.durationMs == 0) continue;
 
                 float thisWeight;
