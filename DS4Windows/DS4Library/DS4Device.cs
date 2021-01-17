@@ -648,7 +648,7 @@ namespace DS4Windows
             {
                 hDevice.OpenFileStream(outputReport.Length);
             }
-            setFeature();
+            //setFeature();
 
             sendOutputReport(true, true, false); // initialize the output report (don't force disconnect the gamepad on initialization even if writeData fails because some fake DS4 gamepads don't support writeData over BT)
         }
@@ -1473,14 +1473,18 @@ namespace DS4Windows
                 fixed (byte* byteR = outputReport, byteB = outReportBuffer)
                 {
                     for (int i = 0, arlen = BT_OUTPUT_CHANGE_LENGTH; !change && i < arlen; i++)
-                        change = byteR[i] != byteB[i];
+                        change = byteR[i] != byteB[i] ? true : (i == 6 || i == 7) && byteB[i] > 0;
                 }
-
-                /*if (change)
+#if false
+                if (change)
                 {
-                    Console.WriteLine("CHANGE: {0} {1} {2} {3} {4} {5}", currentHap.LightBarColor.red, currentHap.LightBarColor.green, currentHap.LightBarColor.blue, currentHap.RumbleMotorStrengthRightLightFast, currentHap.RumbleMotorStrengthLeftHeavySlow, DateTime.Now.ToString());
+                    Console.WriteLine("CHANGE: {0} {1} {2} {3} {4} {5}", currentHap.lightbarState.LightBarColor.red,
+                        currentHap.lightbarState.LightBarColor.green,
+                        currentHap.lightbarState.LightBarColor.blue,
+                        currentHap.rumbleState.RumbleMotorStrengthRightLightFast,
+                        currentHap.rumbleState.RumbleMotorStrengthLeftHeavySlow, DateTime.Now.ToString("o"));
                 }
-                */
+#endif
 
                 haptime = haptime || change;
             }
