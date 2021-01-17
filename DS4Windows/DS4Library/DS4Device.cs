@@ -1459,8 +1459,34 @@ namespace DS4Windows
 
             timeoutExecuted = true;
         }
+        private unsafe bool CheckOutputChange(int arlen, int rumbleIdx)
+        {
+            bool change = false;
+            fixed (byte* byteR = outputReport, byteB = outReportBuffer)
+            {
+                if (!rumbleCoolSw.IsRunning)
+                {
+                    if (byteR[rumbleIdx] > 0 && byteB[rumbleIdx] == 0)
+                        rumbleCoolSw.Restart();
+                    else if (byteR[rumbleIdx+1] > 0 && byteB[rumbleIdx+1] == 0)
+                        rumbleCoolSw.Restart();
+                }
+                if (rumbleCoolSw.IsRunning)
+                {
+                    if (rumbleCoolSw.ElapsedMilliseconds > 100L || !((byteB[rumbleIdx] > 0) ^ (byteB[rumbleIdx+1] > 0)))
+                        rumbleCoolSw.Stop();
+                    else if (byteB[rumbleIdx] == 0) byteB[rumbleIdx] = 1;
+                    else if (byteB[rumbleIdx+1] == 0) byteB[rumbleIdx+1] = 1;
+                }
 
-        private unsafe void PrepareOutputReportInner(ref bool change, ref bool haptime)
+                for (int i = 0; !change && i < arlen; i++)
+                    change = byteR[i] != byteB[i] ? true : (i == rumbleIdx || i == rumbleIdx+1) && (rumbleCoolSw.IsRunning || byteB[i] > 0);
+            }
+
+            return change;
+        }
+
+        private  void PrepareOutputReportInner(ref bool change, ref bool haptime)
         {
             bool usingBT = conType == ConnectionType.BT;
 
@@ -1486,30 +1512,8 @@ namespace DS4Windows
                 outReportBuffer[11] = currentHap.lightbarState.LightBarFlashDurationOn; // flash on duration
                 outReportBuffer[12] = currentHap.lightbarState.LightBarFlashDurationOff; // flash off duration
 
-                fixed (byte* byteR = outputReport, byteB = outReportBuffer)
-                {
-                    if (!rumbleCoolSw.IsRunning)
-                    {
-                        if (byteR[6] > 0 && byteB[6] == 0)
-                            rumbleCoolSw.Restart();
-                        else if (byteR[7] > 0 && byteB[7] == 0)
-                            rumbleCoolSw.Restart();
-                    }
-                    if (rumbleCoolSw.IsRunning)
-                    {
-                        if (rumbleCoolSw.ElapsedMilliseconds > 100L || !((byteB[6] > 0) ^ (byteB[7] > 0)))
-                        {
-                            rumbleCoolSw.Stop();
-                            // Console.WriteLine("STOP COOLINGDOWN TIMER");
-                        }
-                        else if (byteB[6] == 0) byteB[6] = 1;
-                        else if (byteB[7] == 0) byteB[7] = 1;
-                    }
-
-                    for (int i = 0, arlen = BT_OUTPUT_CHANGE_LENGTH; !change && i < arlen; i++)
-                        change = byteR[i] != byteB[i] ? true : (i == 6 || i == 7) && (rumbleCoolSw.IsRunning || byteB[i] > 0);
-                }
-
+                change = CheckOutputChange(BT_OUTPUT_CHANGE_LENGTH, 6);
+               
 #if DEBUG
                 if (change)
                 {
@@ -1537,11 +1541,18 @@ namespace DS4Windows
                 outReportBuffer[9] = currentHap.lightbarState.LightBarFlashDurationOn; // flash on duration
                 outReportBuffer[10] = currentHap.lightbarState.LightBarFlashDurationOff; // flash off duration
 
-                fixed (byte* byteR = outputReport, byteB = outReportBuffer)
+                change = CheckOutputChange(USB_OUTPUT_CHANGE_LENGTH, 4);
+
+#if DEBUG
+                if (change)
                 {
-                    for (int i = 0, arlen = USB_OUTPUT_CHANGE_LENGTH; !change && i < arlen; i++)
-                        change = byteR[i] != byteB[i];
+                    Console.WriteLine("CHANGE: {0} {1} {2} {3} {4} {5}", outReportBuffer[6],
+                        outReportBuffer[7],
+                        outReportBuffer[8],
+                        outReportBuffer[4],
+                        outReportBuffer[5], DateTime.Now.ToString("o"));
                 }
+#endif
 
                 haptime = haptime || change;
                 if (haptime && audio != null)
