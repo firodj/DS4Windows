@@ -210,6 +210,7 @@ namespace DS4Windows
         protected bool charging;
         protected bool readyQuickChargeDisconnect;
         protected int warnInterval = WARN_INTERVAL_USB;
+
         public int getWarnInterval()
         {
             return warnInterval;
@@ -662,7 +663,7 @@ namespace DS4Windows
             {
                 hDevice.OpenFileStream(outputReport.Length);
             }
-            setFeature();
+            //setFeature();
 
             sendOutputReport(true, true, false); // initialize the output report (don't force disconnect the gamepad on initialization even if writeData fails because some fake DS4 gamepads don't support writeData over BT)
         }
@@ -877,6 +878,7 @@ namespace DS4Windows
         private const int OUTPUT_MIN_COUNT_BT = 3;
         private byte[] outputBTCrc32Head = new byte[] { 0xA2 };
         protected readonly Stopwatch standbySw = new Stopwatch();
+        protected readonly Stopwatch rumbleCoolSw = new Stopwatch();
         private unsafe void performDs4Output()
         {
             try
@@ -1457,8 +1459,34 @@ namespace DS4Windows
 
             timeoutExecuted = true;
         }
+        private unsafe bool CheckOutputChange(int arlen, int rumbleIdx)
+        {
+            bool change = false;
+            fixed (byte* byteR = outputReport, byteB = outReportBuffer)
+            {
+                if (!rumbleCoolSw.IsRunning)
+                {
+                    if (byteR[rumbleIdx] > 0 && byteB[rumbleIdx] == 0)
+                        rumbleCoolSw.Restart();
+                    else if (byteR[rumbleIdx+1] > 0 && byteB[rumbleIdx+1] == 0)
+                        rumbleCoolSw.Restart();
+                }
+                if (rumbleCoolSw.IsRunning)
+                {
+                    if (rumbleCoolSw.ElapsedMilliseconds > 100L || !((byteB[rumbleIdx] > 0) ^ (byteB[rumbleIdx+1] > 0)))
+                        rumbleCoolSw.Stop();
+                    else if (byteB[rumbleIdx] == 0) byteB[rumbleIdx] = 1;
+                    else if (byteB[rumbleIdx+1] == 0) byteB[rumbleIdx+1] = 1;
+                }
 
-        private unsafe void PrepareOutputReportInner(ref bool change, ref bool haptime)
+                for (int i = 0; !change && i < arlen; i++)
+                    change = byteR[i] != byteB[i] ? true : (i == rumbleIdx || i == rumbleIdx+1) && (rumbleCoolSw.IsRunning || byteB[i] > 0);
+            }
+
+            return change;
+        }
+
+        private  void PrepareOutputReportInner(ref bool change, ref bool haptime)
         {
             bool usingBT = conType == ConnectionType.BT;
 
@@ -1484,17 +1512,18 @@ namespace DS4Windows
                 outReportBuffer[11] = currentHap.lightbarState.LightBarFlashDurationOn; // flash on duration
                 outReportBuffer[12] = currentHap.lightbarState.LightBarFlashDurationOff; // flash off duration
 
-                fixed (byte* byteR = outputReport, byteB = outReportBuffer)
+                change = CheckOutputChange(BT_OUTPUT_CHANGE_LENGTH, 6);
+               
+#if DEBUG
+                if (change)
                 {
-                    for (int i = 0, arlen = BT_OUTPUT_CHANGE_LENGTH; !change && i < arlen; i++)
-                        change = byteR[i] != byteB[i];
+                    Console.WriteLine("CHANGE: {0} {1} {2} {3} {4} {5}", outReportBuffer[8],
+                        outReportBuffer[9],
+                        outReportBuffer[10],
+                        outReportBuffer[6],
+                        outReportBuffer[7], DateTime.Now.ToString("o"));
                 }
-
-                /*if (change)
-                {
-                    Console.WriteLine("CHANGE: {0} {1} {2} {3} {4} {5}", currentHap.LightBarColor.red, currentHap.LightBarColor.green, currentHap.LightBarColor.blue, currentHap.RumbleMotorStrengthRightLightFast, currentHap.RumbleMotorStrengthLeftHeavySlow, DateTime.Now.ToString());
-                }
-                */
+#endif
 
                 haptime = haptime || change;
             }
@@ -1512,11 +1541,18 @@ namespace DS4Windows
                 outReportBuffer[9] = currentHap.lightbarState.LightBarFlashDurationOn; // flash on duration
                 outReportBuffer[10] = currentHap.lightbarState.LightBarFlashDurationOff; // flash off duration
 
-                fixed (byte* byteR = outputReport, byteB = outReportBuffer)
+                change = CheckOutputChange(USB_OUTPUT_CHANGE_LENGTH, 4);
+
+#if DEBUG
+                if (change)
                 {
-                    for (int i = 0, arlen = USB_OUTPUT_CHANGE_LENGTH; !change && i < arlen; i++)
-                        change = byteR[i] != byteB[i];
+                    Console.WriteLine("CHANGE: {0} {1} {2} {3} {4} {5}", outReportBuffer[6],
+                        outReportBuffer[7],
+                        outReportBuffer[8],
+                        outReportBuffer[4],
+                        outReportBuffer[5], DateTime.Now.ToString("o"));
                 }
+#endif
 
                 haptime = haptime || change;
                 if (haptime && audio != null)
