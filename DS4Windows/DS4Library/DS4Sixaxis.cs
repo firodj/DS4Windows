@@ -154,7 +154,7 @@ namespace DS4Windows
             if (expectedMs == 0) return 0;
             return (float)Math.Min(1.0, (float)durationMs / expectedMs);
         }
-    }    
+    }
 
     public class DS4SixAxis
     {
@@ -166,8 +166,7 @@ namespace DS4Windows
         };
         private bool calibrationDone = false;
 
-        // for continuous calibration
-        // Ref: https://github.com/JibbSmart/JoyShockLibrary/blob/master/JoyShockLibrary/JoyShock.cpp
+        // for continuous calibration (JoyShockLibrary)
         const int num_gyro_average_windows = 3;
         private int gyro_average_window_front_index = 0;
         const int gyro_average_window_ms = 5000;
@@ -309,7 +308,6 @@ namespace DS4Windows
             if (calibrationDone)
                 applyCalibs(ref currentYaw, ref currentPitch, ref currentRoll, ref AccelX, ref AccelY, ref AccelZ);
 
-            // JoySchockCalibration            
             if (gyroAverageTimer.IsRunning)
             {
                 double accelMag = Math.Sqrt(AccelX * AccelX + AccelY * AccelY + AccelZ * AccelZ);
@@ -318,13 +316,15 @@ namespace DS4Windows
                 {
                     gyroAverageTimer.Stop();
                     AverageGyro(ref gyro_offset_x, ref gyro_offset_y, ref gyro_offset_z, ref gyro_accel_magnitude);
+#if DEBUG
                     Console.WriteLine("AverageGyro {0} {1} {2} {3}", gyro_offset_x, gyro_offset_y, gyro_offset_z, gyro_accel_magnitude);
+#endif
                 }
             }
 
             currentYaw -= (int)gyro_offset_x;
             currentPitch -= (int)gyro_offset_y;
-            currentRoll -= (int)gyro_offset_z;            
+            currentRoll -= (int)gyro_offset_z;
 
             SixAxisEventArgs args = null;
             if (AccelX != 0 || AccelY != 0 || AccelZ != 0)
@@ -381,7 +381,7 @@ namespace DS4Windows
                 // next
                 gyro_average_window_front_index = (gyro_average_window_front_index + num_gyro_average_windows - 1) % num_gyro_average_windows;
                 windowPointer = gyro_average_window[gyro_average_window_front_index];
-                windowPointer.Reset();                
+                windowPointer.Reset();
             }
             // accumulate
             windowPointer.numSamples++;
@@ -398,7 +398,6 @@ namespace DS4Windows
             float totalY = 0.0f;
             float totalZ = 0.0f;
             float totalAccelMagnitude = 0.0f;
-            
             int wantedMs = 5000;
             for (int i = 0; i < num_gyro_average_windows && wantedMs > 0; i++)
             {

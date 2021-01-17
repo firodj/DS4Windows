@@ -1071,7 +1071,7 @@
                         </GroupBox>
 
                         <StackPanel Orientation="Horizontal" Margin="0,8,0,8">
-                            <Button x:Name="gyroCalBtn" Content="Gyro Calibration" Width="100"  Click="GyroCalibration_Click" />                            
+                            <Button x:Name="gyroCalBtn" Content="Gyro Calibration" Width="100"  Click="GyroCalibration_Click" />
                         </StackPanel>
                     </StackPanel>
 
