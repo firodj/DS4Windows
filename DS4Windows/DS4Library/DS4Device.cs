@@ -210,6 +210,7 @@ namespace DS4Windows
         protected bool charging;
         protected bool readyQuickChargeDisconnect;
         protected int warnInterval = WARN_INTERVAL_USB;
+
         public int getWarnInterval()
         {
             return warnInterval;
@@ -863,6 +864,7 @@ namespace DS4Windows
         private const int OUTPUT_MIN_COUNT_BT = 3;
         private byte[] outputBTCrc32Head = new byte[] { 0xA2 };
         protected readonly Stopwatch standbySw = new Stopwatch();
+        protected readonly Stopwatch rumbleCoolSw = new Stopwatch();
         private unsafe void performDs4Output()
         {
             try
@@ -1472,17 +1474,36 @@ namespace DS4Windows
 
                 fixed (byte* byteR = outputReport, byteB = outReportBuffer)
                 {
+                    if (!rumbleCoolSw.IsRunning)
+                    {
+                        if (byteR[6] > 0 && byteB[6] == 0)
+                            rumbleCoolSw.Restart();
+                        else if (byteR[7] > 0 && byteB[7] == 0)
+                            rumbleCoolSw.Restart();
+                    }
+                    if (rumbleCoolSw.IsRunning)
+                    {
+                        if (rumbleCoolSw.ElapsedMilliseconds > 100L || !((byteB[6] > 0) ^ (byteB[7] > 0)))
+                        {
+                            rumbleCoolSw.Stop();
+                            // Console.WriteLine("STOP COOLINGDOWN TIMER");
+                        }
+                        else if (byteB[6] == 0) byteB[6] = 1;
+                        else if (byteB[7] == 0) byteB[7] = 1;
+                    }
+
                     for (int i = 0, arlen = BT_OUTPUT_CHANGE_LENGTH; !change && i < arlen; i++)
-                        change = byteR[i] != byteB[i] ? true : (i == 6 || i == 7) && byteB[i] > 0;
+                        change = byteR[i] != byteB[i] ? true : (i == 6 || i == 7) && (rumbleCoolSw.IsRunning || byteB[i] > 0);
                 }
-#if false
+
+#if DEBUG
                 if (change)
                 {
-                    Console.WriteLine("CHANGE: {0} {1} {2} {3} {4} {5}", currentHap.lightbarState.LightBarColor.red,
-                        currentHap.lightbarState.LightBarColor.green,
-                        currentHap.lightbarState.LightBarColor.blue,
-                        currentHap.rumbleState.RumbleMotorStrengthRightLightFast,
-                        currentHap.rumbleState.RumbleMotorStrengthLeftHeavySlow, DateTime.Now.ToString("o"));
+                    Console.WriteLine("CHANGE: {0} {1} {2} {3} {4} {5}", outReportBuffer[8],
+                        outReportBuffer[9],
+                        outReportBuffer[10],
+                        outReportBuffer[6],
+                        outReportBuffer[7], DateTime.Now.ToString("o"));
                 }
 #endif
 
