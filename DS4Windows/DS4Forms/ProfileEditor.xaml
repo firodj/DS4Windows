@@ -1321,7 +1321,7 @@
                                 <DockPanel>
                                     <Label Content="%" DockPanel.Dock="Right" />
                                     <xctk:IntegerUpDown x:Name="RumbleBoostIUD" d:IsHidden="True" Value="{Binding RumbleBoost}" Minimum="0" Maximum="200" Increment="10"
-                                                       MinWidth="50" DockPanel.Dock="Left" />
+                                                       MinWidth="50" DockPanel.Dock="Left" ValueChanged="RumbleBoost_Changed" />
                                 </DockPanel>
 
                                 <DockPanel>

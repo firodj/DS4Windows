@@ -1364,6 +1364,25 @@ namespace DS4WinWPF.DS4Forms
         {
             ApplyProfileStep();
         }
+
+        private void RumbleBoost_Changed(object sender, RoutedPropertyChangedEventArgs<object> e)
+        {
+            int deviceNum = profileSettingsVM.FuncDevNum;
+            if (deviceNum < ControlService.CURRENT_DS4_CONTROLLER_LIMIT)
+            {
+                DS4Device d = App.rootHub.DS4Controllers[deviceNum];
+                if (d != null && (profileSettingsVM.LightRumbleActive || profileSettingsVM.HeavyRumbleActive))
+                {
+                    byte light = profileSettingsVM.LightRumbleActive ?
+                        (byte)Math.Min(255, 255 * profileSettingsVM.RumbleBoost / 100) :
+                        d.RightLightFastRumble;
+                    byte heavy = profileSettingsVM.HeavyRumbleActive ?
+                         (byte)Math.Min(255, 255 * profileSettingsVM.RumbleBoost / 100) :
+                         d.LeftHeavySlowRumble;
+                    d.setRumble(light, heavy);
+                }
+            }
+        }
     }
 
     public class ControlIndexCheck
