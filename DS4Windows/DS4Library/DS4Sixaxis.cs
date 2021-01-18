@@ -375,9 +375,10 @@ namespace DS4Windows
 
             if (windowPointer.StopIfElapsed(gyro_average_window_ms))
             {
+#if DEBUG
                 Console.WriteLine("GyroAvg[{0}], numSamples: {1}", gyro_average_window_front_index,
                     windowPointer.numSamples);
-
+#endif
                 // next
                 gyro_average_window_front_index = (gyro_average_window_front_index + num_gyro_average_windows - 1) % num_gyro_average_windows;
                 windowPointer = gyro_average_window[gyro_average_window_front_index];
