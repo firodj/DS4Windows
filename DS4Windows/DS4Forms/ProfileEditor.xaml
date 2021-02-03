@@ -1572,6 +1572,9 @@
                             <ComboBoxItem Content="DualShock 4"/>
                         </ComboBox>
                     </StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                        <CheckBox Content="Copy-Cat DS4" VerticalAlignment="Center" IsChecked="{Binding CopyCatDS4Enabled}" />
+                    </StackPanel>
                 </StackPanel>
 
             </TabItem>

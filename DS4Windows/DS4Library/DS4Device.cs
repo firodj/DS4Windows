@@ -504,6 +504,13 @@ namespace DS4Windows
             }
         }
 
+        protected bool copyCatDS4enable;
+        public bool CopyCatDS4Enabled
+        {
+            get => copyCatDS4enable;
+            set => copyCatDS4enable = value;
+        }
+
         public DS4Touchpad Touchpad { get { return touchpad; } }
         public DS4SixAxis SixAxis { get { return sixAxis; } }
 
@@ -1505,6 +1512,8 @@ namespace DS4Windows
         private unsafe void PrepareOutputReportInner(ref bool change, ref bool haptime)
         {
             bool usingBT = conType == ConnectionType.BT;
+            // enable rumble (0x01), lightbar (0x02), flash (0x04)
+            byte customEnables = copyCatDS4enable ? (byte)0xf3 : (byte)0xf7;
 
             if (usingBT && (this.featureSet & VidPidFeatureSet.OnlyOutputData0x05) == 0)
             {
@@ -1515,7 +1524,7 @@ namespace DS4Windows
                 outReportBuffer[2] = 0xA0;
 
                 // enable rumble (0x01), lightbar (0x02), flash (0x04)
-                outReportBuffer[3] = 0xf7;
+                outReportBuffer[3] = customEnables;
                 outReportBuffer[4] = 0x04;
 
                 outReportBuffer[6] = currentHap.rumbleState.RumbleMotorStrengthRightLightFast; // fast motor
@@ -1544,7 +1553,7 @@ namespace DS4Windows
             {
                 outReportBuffer[0] = 0x05;
                 // enable rumble (0x01), lightbar (0x02), flash (0x04)
-                outReportBuffer[1] = 0xf7;
+                outReportBuffer[1] = customEnables;
                 outReportBuffer[2] = 0x04;
                 outReportBuffer[4] = currentHap.rumbleState.RumbleMotorStrengthRightLightFast; // fast motor
                 outReportBuffer[5] = currentHap.rumbleState.RumbleMotorStrengthLeftHeavySlow; // slow  motor

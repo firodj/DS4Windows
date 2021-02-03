@@ -1471,6 +1471,10 @@ namespace DS4Windows
 
             device.setIdleTimeout(getIdleDisconnectTimeout(ind));
             device.setBTPollRate(getBTPollRate(ind));
+            device.CopyCatDS4Enabled = Global.CopyCatDS4Enabled[ind];
+            if (device.CopyCatDS4Enabled)
+                LogDebug("Using copy cat DS4"); 
+
             touchPad[ind].ResetTrackAccel(getTrackballFriction(ind));
             if (!startUp)
             {

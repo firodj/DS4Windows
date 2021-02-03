@@ -583,6 +583,12 @@ namespace DS4WinWPF.DS4Forms.ViewModels
             set => Global.DinputOnly[device] = value;
         }
 
+        public bool CopyCatDS4Enabled
+        {
+            get => Global.CopyCatDS4Enabled[device];
+            set => Global.CopyCatDS4Enabled[device] = value;
+        }
+
         public bool IdleDisconnectExists
         {
             get => Global.IdleDisconnectTimeout[device] != 0;

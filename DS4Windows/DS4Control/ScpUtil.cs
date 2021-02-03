@@ -1377,6 +1377,8 @@ namespace DS4Windows
             return m_Config.rumbleAutostopTime[index];
         }
 
+        public static bool[] CopyCatDS4Enabled => m_Config.copyCatDS4enabled; 
+
         public static bool[] EnableTouchToggle => m_Config.enableTouchToggle;
         public static bool getEnableTouchToggle(int index)
         {
@@ -2607,7 +2609,7 @@ namespace DS4Windows
 
         public bool[] gyroMouseStickToggle = new bool[Global.TEST_PROFILE_ITEM_COUNT] { false, false, false,
             false, false, false, false, false, false };
-
+        public bool[] copyCatDS4enabled = new bool[Global.TEST_PROFILE_ITEM_COUNT] { false, false, false, false, false, false, false, false, false };
         public SASteeringWheelEmulationAxisType[] sASteeringWheelEmulationAxis = new SASteeringWheelEmulationAxisType[Global.TEST_PROFILE_ITEM_COUNT] { SASteeringWheelEmulationAxisType.None, SASteeringWheelEmulationAxisType.None, SASteeringWheelEmulationAxisType.None, SASteeringWheelEmulationAxisType.None, SASteeringWheelEmulationAxisType.None, SASteeringWheelEmulationAxisType.None, SASteeringWheelEmulationAxisType.None, SASteeringWheelEmulationAxisType.None, SASteeringWheelEmulationAxisType.None };
         public int[] sASteeringWheelEmulationRange = new int[Global.TEST_PROFILE_ITEM_COUNT] { 360, 360, 360, 360, 360, 360, 360, 360, 360 };
         public int[][] touchDisInvertTriggers = new int[Global.TEST_PROFILE_ITEM_COUNT][] { new int[1] { -1 }, new int[1] { -1 }, new int[1] { -1 },
@@ -6850,6 +6852,7 @@ namespace DS4Windows
                 {
                     tempDev.setIdleTimeout(idleDisconnectTimeout[device]);
                     tempDev.setBTPollRate(btPollRate[device]);
+                    tempDev.CopyCatDS4Enabled = Global.CopyCatDS4Enabled[device];
                     if (xinputStatus && xinputPlug)
                     {
                         OutputDevice tempOutDev = control.outputDevices[device];
