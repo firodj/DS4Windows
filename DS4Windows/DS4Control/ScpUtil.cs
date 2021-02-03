@@ -3478,7 +3478,11 @@ namespace DS4Windows
                     NodeShiftControl.AppendChild(ShiftKeyType);
                 if (ShiftExtras.HasChildNodes)
                     NodeShiftControl.AppendChild(ShiftExtras);
-                
+
+                XmlNode xmlCopyCatDS4Enabled = m_Xdoc.CreateNode(XmlNodeType.Element, "CopyCatDS4Enabled", null);
+                xmlCopyCatDS4Enabled.InnerText = copyCatDS4enabled[device].ToString();
+                rootElement.AppendChild(xmlCopyCatDS4Enabled);
+
                 m_Xdoc.AppendChild(rootElement);
                 m_Xdoc.Save(path);
             }
@@ -5145,6 +5149,12 @@ namespace DS4Windows
                             }
                         }
                     }
+
+                    try { 
+                        Item = m_Xdoc.SelectSingleNode("/" + rootname + "/CopyCatDS4Enabled");
+                        bool.TryParse(Item.InnerText, out copyCatDS4enabled[device]);
+                    }
+                    catch { copyCatDS4enabled[device] = false; }
                 }
             }
             else
@@ -6420,6 +6430,7 @@ namespace DS4Windows
             touchpadRelMouse[device].Reset();
             outputDevType[device] = OutContType.X360;
             ds4Mapping = false;
+            copyCatDS4enabled[device] = false;
         }
 
         public void LoadBlankProfile(int device, bool launchprogram, ControlService control,
