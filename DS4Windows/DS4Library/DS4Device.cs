@@ -504,11 +504,11 @@ namespace DS4Windows
             }
         }
 
-        protected bool copyCatDS4enable;
+        protected bool copyCatDS4enabled;
         public bool CopyCatDS4Enabled
         {
-            get => copyCatDS4enable;
-            set => copyCatDS4enable = value;
+            get => copyCatDS4enabled;
+            set => copyCatDS4enabled = value;
         }
 
         public DS4Touchpad Touchpad { get { return touchpad; } }
@@ -1513,7 +1513,7 @@ namespace DS4Windows
         {
             bool usingBT = conType == ConnectionType.BT;
             // enable rumble (0x01), lightbar (0x02), flash (0x04)
-            byte customEnables = copyCatDS4enable ? (byte)0xf3 : (byte)0xf7;
+            byte customEnables = copyCatDS4enabled ? (byte)0xf3 : (byte)0xf7;
 
             if (usingBT && (this.featureSet & VidPidFeatureSet.OnlyOutputData0x05) == 0)
             {
